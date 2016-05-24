@@ -82,7 +82,7 @@ int16_t rcData[MAX_SUPPORTED_RC_CHANNEL_COUNT];
 uint16_t acc_1G;
 int16_t heading;
 gyro_t gyro;
-int16_t magADC[XYZ_AXIS_COUNT];
+int32_t magADC[XYZ_AXIS_COUNT];
 int32_t BaroAlt;
 int16_t debug[DEBUG16_VALUE_COUNT];
 
@@ -91,8 +91,8 @@ uint16_t flightModeFlags;
 uint8_t armingFlags;
 
 int32_t sonarAlt;
-int16_t accADC[XYZ_AXIS_COUNT];
-int16_t gyroADC[XYZ_AXIS_COUNT];
+int32_t accADC[XYZ_AXIS_COUNT];
+int32_t gyroADC[XYZ_AXIS_COUNT];
 
 
 uint16_t enableFlightMode(flightModeFlags_e mask)
