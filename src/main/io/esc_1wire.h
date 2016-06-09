@@ -20,17 +20,20 @@
 
 #pragma once
 
-#ifdef USE_SERIAL_1WIRE
+#ifdef USE_ESC_SERIAL
 
-extern uint8_t escCount;
+typedef enum {
+    MOT_NORMAL = 1,
+    MOT_REVERSE,
+    MOT_BIDIR,
+    MOT_BIDIR_REVERSE, // only on BLHeli_S, I think
+} motorDirection_e;
 
-typedef struct {
-    GPIO_TypeDef* gpio;
-    uint16_t pinpos;
-    uint16_t pin;
-} escHardware_t;
+void esc1WireInitialize(void);
+void esc1WireStart(void);
+uint8_t esc1WireDumpEEprom(uint8_t** buf, uint8_t escIndex);
+void esc1WireRelease(void);
+uint8_t esc1WireSetMotorDirection(uint8_t escIndex, uint8_t motorDirection);
+uint8_t esc1WireGetMotorDirection(uint8_t escIndex);
 
-
-void usb1WireInitialize();
-void usb1WirePassthrough(uint8_t escIndex);
 #endif

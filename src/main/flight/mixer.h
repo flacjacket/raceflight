@@ -221,3 +221,5 @@ void writeMotors(void);
 void stopMotors(void);
 void stopMotorsNoDelay(void);
 void StopPwmAllMotors(void);
+void pwmDisableMotors(void);
+void pwmEnableMotors(void);
