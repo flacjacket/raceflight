@@ -46,7 +46,7 @@ static const esc1WireProtocol_t *escProtocol[MAX_PWM_MOTORS];
 ////////////////////////////////////////////////////////
 // 1wire functions
 
-void esc1WireInitialize(void) {
+uint8_t esc1WireInitialize(void) {
     escCount = 0;
     memset(&escHardware, 0, sizeof(escHardware));
     memset(&escProtocol, 0, sizeof(escProtocol));
@@ -63,7 +63,7 @@ void esc1WireInitialize(void) {
     return escCount;
 }
 
-void esc1WireStart(void) {
+uint8_t esc1WireStart(void) {
     pwmDisableMotors();    // prevent updating PWM registers
 
     uint8_t escActive = 0;

@@ -29,8 +29,8 @@ typedef enum {
     MOT_BIDIR_REVERSE, // only on BLHeli_S, I think
 } motorDirection_e;
 
-void esc1WireInitialize(void);
-void esc1WireStart(void);
+uint8_t esc1WireInitialize(void);
+uint8_t esc1WireStart(void);
 uint8_t esc1WireDumpEEprom(uint8_t** buf, uint8_t escIndex);
 void esc1WireRelease(void);
 uint8_t esc1WireSetMotorDirection(uint8_t escIndex, uint8_t motorDirection);

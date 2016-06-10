@@ -49,6 +49,7 @@
 
 
 #include "io/escservo.h"
+#include "io/esc_1wire.h"
 #include "io/gps.h"
 #include "io/gimbal.h"
 #include "io/rc_controls.h"
@@ -97,6 +98,14 @@ extern uint16_t cycleTime; // FIXME dependency on mw.c
 void gpsEnablePassthrough(serialPort_t *gpsPassthroughPort);
 
 static serialPort_t *cliPort;
+
+#ifdef USE_ESC_SERIAL
+static void cli1WireInit(char *cmdline);
+static void cli1WireStart(char *cmdline);
+static void cli1WireRelease(char *cmdline);
+static void cli1WireDump(char *cmdline);
+static void cli1WireMotorDirection(char *cmdline);
+#endif
 
 static void cliAux(char *cmdline);
 static void cliRxFail(char *cmdline);
@@ -151,6 +160,7 @@ static void cliFlashErase(char *cmdline);
 static void cliFlashFill(char *cmdline);
 static void cliFlashWrite(char *cmdline);
 static void cliFlashRead(char *cmdline);
+static void cliFlashDump(char *cmdline);
 #endif
 #endif
 
@@ -231,6 +241,13 @@ typedef struct {
 
 // should be sorted a..z for bsearch()
 const clicmd_t cmdTable[] = {
+#ifdef USE_ESC_SERIAL
+    CLI_COMMAND_DEF("1wire_init", "initialize serial 1 wire", NULL, cli1WireInit),
+    CLI_COMMAND_DEF("1wire_start", "start serial 1 wire", NULL, cli1WireStart),
+    CLI_COMMAND_DEF("1wire_release", "release serial 1 wire", NULL, cli1WireRelease),
+    CLI_COMMAND_DEF("1wire_dump", "dump serial 1 wire eeprom", NULL, cli1WireDump),
+    CLI_COMMAND_DEF("1wire_motor", "configure motor direction", "motor_index [direction]", cli1WireMotorDirection),
+#endif
     CLI_COMMAND_DEF("adjrange", "configure adjustment ranges", NULL, cliAdjustmentRange),
     CLI_COMMAND_DEF("aux", "configure modes", NULL, cliAux),
 #ifdef LED_STRIP
@@ -832,6 +849,105 @@ static void cliRxFail(char *cmdline)
         }
     }
 }
+
+#ifdef USE_ESC_SERIAL
+static void cli1WireInit(char *cmdline)
+{
+    if (isEmpty(cmdline)) {
+        uint8_t escCount = esc1WireInitialize();
+        cliPrintf("esc count: %d\r\n", escCount);
+    } else {
+        cliShowParseError();
+    }
+}
+
+static void cli1WireStart(char *cmdline)
+{
+    if (isEmpty(cmdline)) {
+        uint8_t escCount = esc1WireStart();
+        cliPrintf("esc count: %d\r\n", escCount);
+    } else {
+        cliShowParseError();
+    }
+}
+
+static void cli1WireRelease(char *cmdline)
+{
+    if (isEmpty(cmdline)) {
+        esc1WireRelease();
+    } else {
+        cliShowParseError();
+    }
+}
+
+static void cli1WireDump(char *cmdline) {
+    uint8_t *buf;
+    if (isEmpty(cmdline)) {
+        uint8_t len = esc1WireDumpEEprom(&buf, 0);
+        if (len == 0) {
+            cliPrintf("No ESC dump!\r\n");
+        } else {
+            for (int i = 0; i < len; i++) {
+                cliPrintf("%02X ", buf[i]);
+            }
+            cliPrintf("\r\n");
+        }
+    }
+}
+
+static void cli1WireMotorDirection(char *cmdline) {
+    int motor;
+    uint8_t direction;
+
+    if (isEmpty(cmdline)) {
+        cliShowParseError();
+    } else {
+        motor = atoi(cmdline++);
+        char *ptr = strchr(cmdline, ' ');
+        if (ptr) {
+            // set the motor direction
+            ptr++;
+            if (strncasecmp(ptr, "normal", 7) == 0) {
+                direction = MOT_NORMAL;
+            } else if (strncasecmp(ptr, "reversed", 9) == 0) {
+                direction = MOT_REVERSE;
+            } else if (strncasecmp(ptr, "bidirectional", 14) == 0) {
+                direction = MOT_BIDIR;
+            } else {
+                cliPrintf("Unknown motor direction!\r\n");
+                return;
+            }
+            cliPrintf("Setting direction %d\r\n", direction);
+            uint8_t res = esc1WireSetMotorDirection(motor, direction);
+            if (!res) {
+                cliPrintf("Error writing out motor direction\r\n");
+            }
+        } else {
+            // get the motor direction
+            direction = esc1WireGetMotorDirection(motor);
+
+            cliPrintf("Motor %d direction: ", motor);
+            switch (direction) {
+            case MOT_NORMAL:
+                cliPrintf("normal\r\n");
+                break;
+            case MOT_REVERSE:
+                cliPrintf("reversed\r\n");
+                break;
+            case MOT_BIDIR:
+                cliPrintf("bidirectional\r\n");
+                break;
+            case MOT_BIDIR_REVERSE:
+                cliPrintf("bidirectional reversed\r\n");
+                break;
+            default:
+                cliPrintf("UNKNOWN (%d)\r\n", direction);
+                break;
+            }
+        }
+    }
+}
+#endif
 
 static void cliAux(char *cmdline)
 {
